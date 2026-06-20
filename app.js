@@ -1,4 +1,4 @@
-﻿// =====================
+// =====================
 // DICCIONARIO DE TRADUCCIÓN
 // =====================
 /**
@@ -79,6 +79,8 @@ const translations = {
         'France': 'Francia',
         'Australia': 'Australia',
         'Germany': 'Alemania',
+        'Argentinian': 'Argentina',
+        'Argentine': 'Argentina',
         'Argentina': 'Argentina',
         'Hungary': 'Hungría',
         'Finland': 'Finlandia',
@@ -97,6 +99,56 @@ const translations = {
         'Haiti': 'Haití',
         'Trinidad and Tobago': 'Trinidad y Tobago'
     }
+};
+
+const areaAliases = {
+    American: ['United States', 'USA', 'US', 'Estados Unidos', 'Americana'],
+    British: ['United Kingdom', 'UK', 'Britain', 'Inglaterra', 'Reino Unido', 'Británica'],
+    Canadian: ['Canada', 'Canadá', 'Canadiense'],
+    Chinese: ['China', 'China'],
+    Croatian: ['Croatia', 'Croacia', 'Croata'],
+    Dutch: ['Netherlands', 'Holland', 'Holanda', 'Países Bajos', 'Holandesa'],
+    Egyptian: ['Egypt', 'Egipto', 'Egipcia'],
+    French: ['France', 'Francia', 'Francesa'],
+    Greek: ['Greece', 'Grecia', 'Griega'],
+    Indian: ['India', 'India'],
+    Irish: ['Ireland', 'Irlanda', 'Irlandesa'],
+    Italian: ['Italy', 'Italia', 'Italiana'],
+    Jamaican: ['Jamaica', 'Jamaiquina'],
+    Japanese: ['Japan', 'Japón', 'Japonesa'],
+    Kenyan: ['Kenya', 'Kenia', 'Keniata'],
+    Malaysian: ['Malaysia', 'Malasia'],
+    Mexican: ['Mexico', 'México', 'Mexicana'],
+    Norwegian: ['Norway', 'Noruega', 'Noruega'],
+    Polish: ['Poland', 'Polonia', 'Polaca'],
+    Portuguese: ['Portugal', 'Portuguesa'],
+    Russian: ['Russia', 'Rusia', 'Rusa'],
+    Spanish: ['Spain', 'España', 'Española'],
+    Thai: ['Thailand', 'Tailandia', 'Tailandesa'],
+    Tunisian: ['Tunisia', 'Túnez', 'Tunecina'],
+    Turkish: ['Turkey', 'Turquía', 'Turca'],
+    Ukrainian: ['Ukraine', 'Ucrania', 'Ucraniana'],
+    Uruguayan: ['Uruguay', 'Uruguaya'],
+    Vietnamese: ['Vietnam', 'Vietnamita'],
+    Moroccan: ['Morocco', 'Marruecos', 'Marroquí'],
+    Korean: ['Korea', 'South Korea', 'Corea', 'Corea del Sur', 'Coreana'],
+    Argentinian: ['Argentina', 'Argentine', 'Argentina'],
+    Argentine: ['Argentina', 'Argentinian', 'Argentina'],
+    Argentina: ['Argentinian', 'Argentine', 'Argentina'],
+    Brazilian: ['Brazil', 'Brasil', 'Brasileña'],
+    Brazil: ['Brazilian', 'Brasil', 'Brasileña'],
+    Peruvian: ['Peru', 'Perú', 'Peruana'],
+    Peru: ['Peruvian', 'Perú', 'Peruana'],
+    Colombian: ['Colombia', 'Colombiana'],
+    Venezuelan: ['Venezuela', 'Venezolana'],
+    Chilean: ['Chile', 'Chilena'],
+    Australian: ['Australia', 'Australiana'],
+    German: ['Germany', 'Alemania', 'Alemana'],
+    Germany: ['German', 'Alemania', 'Alemana'],
+    Hungarian: ['Hungary', 'Hungría', 'Húngara'],
+    Finnish: ['Finland', 'Finlandia', 'Finlandesa'],
+    Danish: ['Denmark', 'Dinamarca', 'Danesa'],
+    Lebanese: ['Lebanon', 'Líbano', 'Libanesa']
 };
 
 /**
@@ -471,6 +523,7 @@ const searchHistory = new SearchHistory();
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const randomBtn = document.getElementById('randomBtn');
+const clearBtn = document.getElementById('clearBtn');
 const categoryFilter = document.getElementById('categoryFilter');
 const areaFilter = document.getElementById('areaFilter');
 const recipesGrid = document.getElementById('recipesGrid');
@@ -501,7 +554,7 @@ const searchHistoryEl = document.getElementById('searchHistory');
  */
 async function searchRecipesByName(query) {
     if (!query.trim()) {
-        showError('Por favor ingresa un nombre de receta');
+        await loadRecommendedRecipes();
         return;
     }
 
@@ -543,6 +596,85 @@ async function searchRecipesByName(query) {
     } catch (error) {
         console.error('Error en búsqueda:', error);
         showError(`Error al buscar recetas: ${error.message}`);
+    } finally {
+        setLoading(false);
+    }
+}
+
+async function fetchMealById(mealId) {
+    const response = await fetch(`${API_BASE_URL}/lookup.php?i=${mealId}`);
+
+    if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.meals && data.meals.length > 0 ? data.meals[0] : null;
+}
+
+async function getRandomMeal() {
+    const response = await fetch(`${API_BASE_URL}/random.php`);
+
+    if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.meals && data.meals.length > 0 ? data.meals[0] : null;
+}
+
+function removeDuplicateMeals(meals) {
+    const seen = new Set();
+
+    return meals.filter(meal => {
+        if (!meal || seen.has(meal.idMeal)) {
+            return false;
+        }
+
+        seen.add(meal.idMeal);
+        return true;
+    });
+}
+
+async function loadRecommendedRecipes() {
+    setLoading(true);
+    clearError();
+
+    try {
+        let meals = [];
+        const categoryValue = categoryFilter.value;
+        const areaValue = areaFilter.value;
+
+        if (areaValue || categoryValue) {
+            const endpoint = areaValue
+                ? `${API_BASE_URL}/filter.php?a=${encodeURIComponent(areaValue)}`
+                : `${API_BASE_URL}/filter.php?c=${encodeURIComponent(categoryValue)}`;
+            const response = await fetch(endpoint);
+
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const mealRefs = data.meals ? data.meals.slice(0, 12) : [];
+            const detailRequests = mealRefs.map(meal => fetchMealById(meal.idMeal));
+            meals = await Promise.all(detailRequests);
+        } else {
+            const randomRequests = Array.from({ length: 10 }, () => getRandomMeal());
+            meals = await Promise.all(randomRequests);
+        }
+
+        state.recipes = removeDuplicateMeals(meals);
+        filterRecipes();
+        switchTab('recipes');
+        renderRecipes();
+
+        if (state.filteredRecipes.length === 0) {
+            showError('No encontramos recomendadas con esos filtros. Prueba otra combinación.');
+        }
+    } catch (error) {
+        console.error('Error cargando recomendadas:', error);
+        showError('No pudimos cargar recetas recomendadas. Intenta de nuevo.');
     } finally {
         setLoading(false);
     }
@@ -677,19 +809,77 @@ async function loadAreas() {
  * Filtra recetas por categoría y área
  * Usa array methods: filter
  */
+function normalizeText(value) {
+    return (value || '')
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function valuesMatchInEitherLanguage(value, selectedValue, translator) {
+    if (!selectedValue) return true;
+
+    const normalizedValue = normalizeText(value);
+    const normalizedSelected = normalizeText(selectedValue);
+    const normalizedTranslatedValue = normalizeText(translator(value));
+    const normalizedTranslatedSelected = normalizeText(translator(selectedValue));
+
+    return normalizedValue === normalizedSelected ||
+        normalizedTranslatedValue === normalizedSelected ||
+        normalizedValue === normalizedTranslatedSelected ||
+        normalizedTranslatedValue === normalizedTranslatedSelected;
+}
+
+function getAreaMatchValues(area) {
+    const values = new Set([area, translateArea(area)]);
+    const normalizedArea = normalizeText(area);
+
+    Object.entries(areaAliases).forEach(([key, aliases]) => {
+        const allValues = [key, translateArea(key), ...aliases];
+        const hasMatch = allValues.some(alias => normalizeText(alias) === normalizedArea);
+
+        if (hasMatch) {
+            allValues.forEach(alias => values.add(alias));
+        }
+    });
+
+    return Array.from(values).map(normalizeText);
+}
+
+function areasMatch(value, selectedValue) {
+    if (!selectedValue) return true;
+
+    const valueOptions = getAreaMatchValues(value);
+    const selectedOptions = getAreaMatchValues(selectedValue);
+
+    return valueOptions.some(option => selectedOptions.includes(option));
+}
+
 function filterRecipes() {
     const categoryValue = categoryFilter.value;
     const areaValue = areaFilter.value;
 
     // Aplica filtros usando filter (array method)
     state.filteredRecipes = state.recipes.filter(recipe => {
-        const matchCategory = !categoryValue || recipe.strCategory === categoryValue;
-        const matchArea = !areaValue || recipe.strArea === areaValue;
+        const recipeCategory = recipe.strCategory || recipe.category;
+        const recipeArea = recipe.strArea || recipe.area;
+        const matchCategory = valuesMatchInEitherLanguage(recipeCategory, categoryValue, translateCategory);
+        const matchArea = areasMatch(recipeArea, areaValue);
         return matchCategory && matchArea;
     });
 
     // Ordena alfabéticamente usando sort (array method)
     state.filteredRecipes.sort((a, b) => a.strMeal.localeCompare(b.strMeal));
+}
+
+function clearSearchAndFilters() {
+    searchInput.value = '';
+    categoryFilter.value = '';
+    areaFilter.value = '';
+    clearError();
+    loadRecommendedRecipes();
 }
 
 // =====================
@@ -1053,16 +1243,29 @@ searchInput.addEventListener('keypress', (e) => {
     }
 });
 
+// Limpiar búsqueda y filtros
+clearBtn.addEventListener('click', clearSearchAndFilters);
+
 // Receta aleatoria
 randomBtn.addEventListener('click', getRandomRecipe);
 
 // Filtros
 categoryFilter.addEventListener('change', () => {
+    if (!searchInput.value.trim()) {
+        loadRecommendedRecipes();
+        return;
+    }
+
     filterRecipes();
     renderRecipes();
 });
 
 areaFilter.addEventListener('change', () => {
+    if (!searchInput.value.trim()) {
+        loadRecommendedRecipes();
+        return;
+    }
+
     filterRecipes();
     renderRecipes();
 });
@@ -1088,7 +1291,7 @@ themeToggle.addEventListener('click', toggleTheme);
 // Reintentar después de error
 retryBtn.addEventListener('click', () => {
     clearError();
-    searchRecipesByName(searchInput.value || 'Pasta');
+    searchRecipesByName(searchInput.value);
 });
 
 // =====================
@@ -1106,8 +1309,8 @@ async function init() {
     // Renderiza historial
     renderSearchHistory();
 
-    // Realiza búsqueda inicial de ejemplo
-    searchRecipesByName('Pasta');
+    // Carga recomendaciones iniciales
+    loadRecommendedRecipes();
 }
 
 // Inicia la app cuando el DOM esté listo
