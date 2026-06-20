@@ -142,7 +142,7 @@ button {
 
 .search-container {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
     gap: 12px;
 }
 
@@ -188,6 +188,7 @@ button {
 
 .search-btn,
 .random-btn,
+.clear-btn,
 .retry-btn,
 .btn-small,
 .btn-large {
@@ -212,6 +213,20 @@ button {
 .search-btn,
 .random-btn {
     padding: 0 18px;
+}
+
+.clear-btn {
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    background: var(--surface-soft);
+    color: var(--muted);
+}
+
+.clear-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
 }
 
 .search-btn:hover,
