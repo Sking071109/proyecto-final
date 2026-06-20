@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecipeRoulette - Recetas inteligentes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="header">
+            <div class="header-content">
+                <div class="brand-mark" aria-hidden="true">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <div>
+                    <h1 class="title">RecipeRoulette</h1>
+                    <p class="subtitle">Encuentra, traduce y guarda recetas en segundos</p>
+                </div>
+            </div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </header>
+
+        <main class="main">
+            <section class="search-section" aria-label="Buscador de recetas">
+                <div class="search-container">
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Busca por nombre de receta, por ejemplo Pasta"
+                            class="search-input"
+                        >
+                    </div>
+                    <button id="searchBtn" class="search-btn">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Buscar
+                    </button>
+                    <button id="randomBtn" class="random-btn">
+                        <i class="fa-solid fa-shuffle"></i>
+                        Sorpresa
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="categoryFilter">Categor&iacute;a</label>
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="areaFilter">Cocina</label>
+                        <select id="areaFilter" class="filter-select">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="search-history" id="searchHistory"></div>
+            </section>
+
+            <div class="tabs" role="tablist" aria-label="Secciones de recetas">
+                <button class="tab-btn active" data-tab="recipes">
+                    <i class="fa-solid fa-book-open"></i>
+                    Recetas
+                </button>
+                <button class="tab-btn" data-tab="favorites">
+                    <i class="fa-solid fa-heart"></i>
+                    Favoritas
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Buscando recetas deliciosas...</p>
+            </div>
+
+            <div class="error" id="error">
+                <p id="errorMessage"></p>
+                <button id="retryBtn" class="retry-btn">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    Reintentar
+                </button>
+            </div>
+
+            <div class="tab-content active" id="recipes-tab">
+                <div class="recipes-grid" id="recipesGrid"></div>
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-kitchen-set"></i>
+                    <p>Busca una receta para comenzar</p>
+                </div>
+            </div>
+
+            <div class="tab-content" id="favorites-tab">
+                <div class="recipes-grid" id="favoritesGrid"></div>
+                <div class="empty-state" id="emptyFavorites">
+                    <i class="fa-regular fa-heart"></i>
+                    <p>No tienes favoritas a&uacute;n. Guarda tus recetas favoritas.</p>
+                </div>
+            </div>
+        </main>
+
+        <div class="modal" id="recipeModal">
+            <div class="modal-content">
+                <button class="modal-close" id="closeModal" aria-label="Cerrar modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="modal-body" id="modalBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
